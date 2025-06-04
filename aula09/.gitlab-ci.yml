@@ -1,0 +1,31 @@
+stages:
+  - lint
+  - scan
+
+lint-dockerfile:
+  stage: lint
+  script:
+    - docker run --rm -i hadolint/hadolint < Dockerfile > hadolint-report.txt || true
+  artifacts:
+    paths:
+      - hadolint-report.txt
+
+dockle-scan:
+  stage: scan
+  script:
+    - docker build -t test-image .
+    - docker run --rm -v /var/run/docker.sock:/var/run/docker.sock goodwithtech/dockle:latest test-image > dockle-report.txt || true
+  artifacts:
+    paths:
+      - dockle-report.txt
+    expire_in: 1 week
+
+
+trivy-config-scan:
+  stage: scan
+  script:
+    - docker run --rm -v "$PWD":/project aquasec/trivy:latest config /project > trivy-config-report.txt || true
+  artifacts:
+    paths:
+      - trivy-config-report.txt
+    expire_in: 1 week

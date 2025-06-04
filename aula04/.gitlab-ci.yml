@@ -1,0 +1,39 @@
+image: docker:latest
+
+services:
+  - docker:dind
+
+variables:
+  DOCKER_TLS_CERTDIR: ""
+
+stages:
+  - build
+  - validate
+  - test
+
+build-image:
+  stage: build
+  tags:
+    - docker
+  script:
+    - echo "🔧 Buildando imagem"
+    - docker info
+    - docker build -t php-app .
+
+validate-compose:
+  stage: validate
+  tags:
+    - docker
+  script:
+    - echo "✅ Validando docker-compose"
+    - docker compose config
+
+run-compose:
+  stage: test
+  tags:
+    - docker
+  script:
+    - echo "🚀 Subindo app com docker-compose"
+    - docker compose up -d
+    - sleep 5
+    - docker compose ps

@@ -1,0 +1,24 @@
+# Etapa de build
+FROM alpine:3.20 as builder
+
+# Cria script com permissão restrita
+RUN echo '#!/bin/sh\n echo "App executando com segurança!"' > /app.sh \
+    && chmod 755 /app.sh
+
+# Imagem final segura
+FROM alpine:3.20
+
+# Criação de usuário e diretório seguro
+RUN adduser -D -H -s /bin/sh appuser \
+    && mkdir -p /usr/local/bin \
+    && chown -R appuser:appuser /usr/local/bin
+
+# Copia o app com dono apropriado
+COPY --from=builder /app.sh /usr/local/bin/app.sh
+RUN chown appuser:appuser /usr/local/bin/app.sh && chmod 755 /usr/local/bin/app.sh
+
+# Define o usuário não-root
+USER appuser
+
+# Entrypoint com path absoluto seguro
+ENTRYPOINT ["/usr/local/bin/app.sh"]

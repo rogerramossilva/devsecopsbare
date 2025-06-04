@@ -1,0 +1,75 @@
+stages:
+  - build
+  - push
+  - sign
+  - verify
+
+variables:
+  IMAGE_NAME: rogerramossilva/myapp
+  IMAGE_TAG: dev
+  IMAGE_FULL: $IMAGE_NAME:$IMAGE_TAG
+
+# Etapa 1: Build da imagem
+build_image:
+  stage: build
+  script:
+    - echo "🛠️ Build da imagem $IMAGE_FULL"
+    - docker build -t $IMAGE_FULL .
+
+# Etapa 2: Push para o Docker Hub.
+push_image:
+  stage: push
+  script:
+    - echo "📤 Login no Docker Hub"
+    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin
+    - echo "📦 Push da imagem $IMAGE_FULL"
+    - docker push $IMAGE_FULL
+  needs: ["build_image"]
+
+# Etapa 3: Assinatura com Cosign
+sign_cosign:
+  stage: sign
+  script:
+    - export COSIGN_PASSWORD=""
+    - echo "🔐 Gerando par de chaves Cosign"
+    - echo "y" | cosign generate-key-pair
+    - mkdir -p keys
+    - mv cosign.key cosign.pub keys/
+    - cosign sign --yes --key keys/cosign.key docker.io/$IMAGE_FULL
+  needs: ["push_image"]
+  artifacts:
+    paths:
+      - keys/
+    expire_in: 1 hour
+
+# Etapa 4: Verificação com Cosign
+verify_cosign:
+  stage: verify
+  script:
+    - echo "🔍 Verificando assinatura com Cosign"
+    - cosign verify --key keys/cosign.pub docker.io/$IMAGE_FULL
+  needs: ["sign_cosign"]
+  dependencies:
+    - sign_cosign
+
+# Etapa 5: Assinatura com Notation
+sign_notation:
+  stage: sign
+  image: curlimages/curl:latest
+  variables:
+    IMAGE_FULL: "docker.io/rogerramossilva/myapp:dev"
+  script:
+    # Baixar e preparar o Notation
+    - curl -LO https://github.com/notaryproject/notation/releases/download/v1.0.1/notation_1.0.1_linux_amd64.tar.gz
+    - tar -xvzf notation_1.0.1_linux_amd64.tar.gz
+    - chmod +x notation
+
+    # Criar diretório de configuração
+    - mkdir -p ~/.config/notation
+
+    # Gerar chave padrão se não existir
+    - ./notation cert list | grep mysigner || ./notation cert generate-test --default mysigner
+
+    # Assinar imagem
+    - ./notation sign $IMAGE_FULL
+  needs: ["push_image"]

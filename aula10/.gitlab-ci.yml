@@ -1,0 +1,72 @@
+stages:
+  - lint
+  - build
+  - scan-before
+  - scan-after
+
+variables:
+  DOCKER_BUILDKIT: "1"
+
+lint-dockerfile:
+  stage: lint
+  image: docker:24.0.7
+  services:
+    - docker:24.0.7-dind
+  script:
+    - docker run --rm -i hadolint/hadolint < Dockerfile > hadolint-report.txt || true
+  artifacts:
+    paths:
+      - hadolint-report.txt
+
+build-dev:
+  stage: build
+  image: docker:24.0.7
+  services:
+    - docker:24.0.7-dind
+  script:
+    - echo "Build da imagem original"
+    - docker build -t myapp:dev -f Dockerfile .
+  artifacts:
+    name: "image-dev"
+    expire_in: 1 hour
+
+build-secure:
+  stage: build
+  image: docker:24.0.7
+  services:
+    - docker:24.0.7-dind
+  script:
+    - echo "Build da imagem hardenizada"
+    - docker build -t myapp:secure -f Dockerfile.secure .
+  artifacts:
+    name: "image-secure"
+    expire_in: 1 hour
+
+scan-before:
+  stage: scan-before
+  image: docker:24.0.7
+  services:
+    - docker:24.0.7-dind
+  script:
+    - echo "Scan da imagem original"
+    - docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v $(pwd):/output aquasec/trivy:latest image myapp:dev --format table --output /output/before.txt
+  artifacts:
+    paths:
+      - before.txt
+  needs:
+    - job: build-dev
+
+scan-after:
+  stage: scan-after
+  image: docker:24.0.7
+  services:
+    - docker:24.0.7-dind
+  script:
+    - echo "Scan da imagem após hardening"
+    - docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v $(pwd):/output  aquasec/trivy:latest image myapp:secure --format table --output /output/after.txt
+  artifacts:
+    paths:
+      - after.txt
+  needs:
+    - job: build-secure
+

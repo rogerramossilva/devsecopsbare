@@ -1,0 +1,98 @@
+stages:
+  - validate
+  - lint
+  - build
+  - test
+  - scan
+  - deploy
+  - notify
+
+variables:
+  DOCKER_TLS_CERTDIR: ""
+  SECURE_ENV: "true"
+
+validate-compose:
+  stage: validate
+  image: docker:24.0.2-cli
+  script:
+    - docker --version
+    - docker compose config
+    - docker compose -f docker-compose.yml config
+  rules:
+    - if: '$CI_COMMIT_BRANCH'
+
+lint-php:
+  stage: lint
+  image: php:8.2-cli
+  script:
+    - php -l src/index.php
+  rules:
+    - if: '$CI_COMMIT_BRANCH'
+
+docker-build:
+  stage: build
+  image: docker:24.0.2-cli
+  services:
+    - docker:24.0.2-dind
+  needs: [lint-php]
+  script:
+    - docker info
+    - docker build -t php-app:$CI_COMMIT_SHORT_SHA .
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+
+run-tests:
+  stage: test
+  image: php:8.2-cli
+  script:
+    - php tests/test.php
+  rules:
+    - if: '$CI_COMMIT_BRANCH'
+
+security-scan:
+  stage: scan
+  image: aquasec/trivy:latest
+  before_script:
+    - mkdir -p ./bin
+    - curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b ./bin
+    - export PATH="$PATH:$(pwd)/bin"
+  script:
+    - ./bin/trivy image --format json --output trivy-report.json php:8.2-cli || true
+  artifacts:
+    name: "trivy-report"
+    paths:
+      - trivy-report.json
+    when: always
+    expire_in: 1 week
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+
+deploy-staging:
+  stage: deploy
+  environment: staging
+  script:
+    - echo "$STAGING_DEPLOY_KEY" > ~/.ssh/id_rsa
+    - chmod 600 ~/.ssh/id_rsa
+    - echo "Deploy no ambiente de staging realizado com sucesso."
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "develop"'
+  script:
+    - echo "Deploy no ambiente de staging"
+
+deploy-production:
+  stage: deploy
+  environment: production
+  script:
+    - echo "$PROD_DEPLOY_KEY" > ~/.ssh/id_rsa
+    - chmod 600 ~/.ssh/id_rsa
+    - echo "Deploy no ambiente de produção realizado com sucesso."
+  rules:
+    - if: '$CI_COMMIT_TAG'
+  script:
+    - echo "Deploy no ambiente de Prod"
+
+notify:
+  stage: notify
+  script:
+    - echo "Notificação de CI enviada com sucesso."
+

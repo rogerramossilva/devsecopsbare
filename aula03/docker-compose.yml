@@ -1,0 +1,14 @@
+version: '3.8'
+services:
+  web:
+    image: nginx
+    ports:
+      - "8082:80"
+    volumes:
+      - nginx-data:/usr/share/nginx/html
+  redis:
+    image: redis
+    ports:
+      - "6379:6379"
+volumes:
+  nginx-data:

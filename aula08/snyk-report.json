@@ -1,0 +1,5 @@
+{
+  "ok": false,
+  "error": "Failed to scan image \"app:latest\". Please make sure the image and/or repository exist, and that you are using the correct credentials.",
+  "path": "app:latest"
+}
