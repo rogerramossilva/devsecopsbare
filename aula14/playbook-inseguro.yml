@@ -1,0 +1,15 @@
+---
+- name: Teste com falhas de segurança
+  hosts: all
+  tasks:
+    - name: Uso de shell com comando inseguro (violação CKV_ANSIBLE_1)
+      shell: curl http://inseguro.com
+
+    - name: Uso de senha hardcoded (violação CKV_SECRET_6)
+      lineinfile:
+        path: /etc/shadow
+        line: "root:senha123"
+        create: true
+
+    - name: Uso de module raw (violação CKV_ANSIBLE_2)
+      raw: apt update && apt install -y telnet

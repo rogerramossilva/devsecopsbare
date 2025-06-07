@@ -1,0 +1,9 @@
+---
+- name: Playbook inseguro
+  hosts: localhost
+  tasks:
+    - name: Shell inseguro (CKV_ANSIBLE_1)
+      shell: curl http://inseguro.com
+
+    - name: Raw module inseguro (CKV_ANSIBLE_2)
+      raw: apt update && apt install -y telnet

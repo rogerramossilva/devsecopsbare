@@ -1,0 +1,25 @@
+---
+# tasks file for roles/hardening
+- name: Desabilitar login root via SSH
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^PermitRootLogin'
+    line: 'PermitRootLogin no'
+  notify: Restart SSH
+
+- name: Instalar UFW
+  apt:
+    name: ufw
+    state: present
+
+- name: Configurar política padrão do UFW
+  ufw:
+    state: disabled
+    policy: deny
+    direction: incoming
+
+- name: Instalar fail2ban
+  apt:
+    name: fail2ban
+    state: present
+
