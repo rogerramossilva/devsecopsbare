@@ -1,0 +1,33 @@
+stages:
+  - sast
+
+semgrep_sast:
+  stage: sast
+  image:
+    name: returntocorp/semgrep
+    entrypoint: [""]  # Evita conflitos com o ENTRYPOINT padrãoa
+  script:
+    - semgrep --config=auto src --sarif -o semgrep.sarif || echo '{}' > semgrep.sarif
+  artifacts:
+    paths:
+      - semgrep.sarif
+    when: always
+    reports:
+      sast: semgrep.sarif
+
+
+sonarqube_scan:
+  stage: sast
+  image:
+    name: sonarsource/sonar-scanner-cli
+  script:
+    - sonar-scanner -Dsonar.projectKey=exemplo-python -Dsonar.sources=src -Dsonar.host.url=http://192.168.15.91:9000 -Dsonar.login=$SONAR_TOKEN
+  tags:
+    - docker
+  interruptible: true
+  rules:
+    - when: always
+  # Apenas se necessário
+  before_script:
+    - echo "Scanner inicializado"
+

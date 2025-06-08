@@ -1,0 +1,7 @@
+rules:
+  - id: insecure-eval
+    pattern: eval(...)
+    message: "Evite usar eval() — risco de injeção de código."
+    languages: [python]
+    severity: ERROR
+
