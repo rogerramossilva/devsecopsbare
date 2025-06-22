@@ -1,0 +1,4 @@
+NAME      INSTALLED  FIXED-IN  TYPE    VULNERABILITY        SEVERITY  EPSS%  RISK  
+requests  2.21.0     2.31.0    python  GHSA-j8r2-6x86-q33q  Medium    90.30    3.4  
+requests  2.21.0     2.32.4    python  GHSA-9hjg-9r4m-mvj7  Medium    18.03  < 0.1  
+requests  2.21.0     2.32.0    python  GHSA-9wx4-h78v-vm56  Medium     2.77  < 0.1

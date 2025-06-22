@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  auth-service:
+    build: ./auth-service
+    ports:
+      - "5000:5000"
+
+  user-service:
+    build: ./user-service
+    ports:
+      - "5001:5001"
+
+  order-service:
+    build: ./order-service
+    ports:
+      - "5002:5002"
+
+  nginx-gateway:
+    build: ./nginx
+    ports:
+      - "443:443"
+    volumes:
+      - ./certs:/etc/nginx/certs

@@ -1,0 +1,7 @@
+{
+  "users": [
+    { "id": 1, "username": "admin", "email": "admin@local" },
+    { "id": 2, "username": "user", "email": "user@local" }
+  ],
+  "comments": []
+}

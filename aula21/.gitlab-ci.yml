@@ -1,0 +1,13 @@
+stages:
+  - test
+
+postman-test:
+  stage: test
+  image: debian:bookworm
+  before_script:
+    - apt-get update && apt-get install -y curl
+    - curl -L "https://dl-cli.pstmn.io/download/latest/linux64" -o postman
+    - chmod +x postman
+  script:
+    - ./postman login --with-api-key "$POSTMAN_API_KEY"
+    - ./postman collection run "45944036-19f5a601-c5db-492f-9a34-92351f190c42"

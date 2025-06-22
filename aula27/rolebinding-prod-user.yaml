@@ -1,0 +1,15 @@
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: bind-pod-reader
+  namespace: rbac-prod
+subjects:
+- kind: ServiceAccount
+  name: prod-user
+  namespace: rbac-prod
+roleRef:
+  kind: Role
+  name: pod-reader
+  apiGroup: rbac.authorization.k8s.io
+
+

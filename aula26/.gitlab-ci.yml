@@ -1,0 +1,21 @@
+stages:
+  - secure
+  - doppler-secure
+
+secure-stage:
+  stage: secure
+  image: curlimages/curl
+  script:
+    - echo "Obtendo segredos do Vault..."
+    - |
+      response=$(curl --silent --header "X-Vault-Token: $VAULT_TOKEN" \
+        $VAULT_ADDR/v1/secret/data/devsecops)
+      echo "$response" | jq '.data.data'
+
+doppler-secure-stage:
+  stage: doppler-secure
+  image: dopplerhq/cli
+  script:
+    - echo "$DOPPLER_TOKEN" > /tmp/token
+    - export DOPPLER_TOKEN=$(cat /tmp/token)
+    - doppler run --project devsecops --config prd --command "echo \$DB_USER && echo \$DB_PASS"
