@@ -1,6 +1,9 @@
 # Etapa de build
 FROM alpine:3.20 as builder
-RUN echo '#!/bin/sh\n echo "App executando com segurança!"' > /app.sh && chmod +x /app.sh
+RUN cat << 'EOF' > /app.sh && chmod +x /app.sh
+#!/bin/sh
+echo "App executando com segurança!"
+EOF
 
 # Imagem final (sem hardening)
 FROM alpine:3.20
