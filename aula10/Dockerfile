@@ -1,11 +1,8 @@
-# Etapa de build
-FROM alpine:3.20 as builder
-RUN cat << 'EOF' > /app.sh && chmod +x /app.sh
-#!/bin/sh
-echo "App executando com segurança!"
-EOF
+FROM debian:bullseye-slim AS builder
+RUN echo '#!/bin/sh' > /app.sh && \
+    echo 'echo "App executando com segurança!"' >> /app.sh && \
+    chmod +x /app.sh
 
-# Imagem final (sem hardening)
-FROM alpine:3.20
+FROM debian:bullseye-slim
 COPY --from=builder /app.sh /usr/local/bin/app.sh
 ENTRYPOINT ["/usr/local/bin/app.sh"]
