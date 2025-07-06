@@ -1,9 +1,11 @@
 # Etapa de build
 FROM alpine:3.20 as builder
 
-# Cria script com permissão restrita
-RUN echo '#!/bin/sh\n echo "App executando com segurança!"' > /app.sh \
-    && chmod 755 /app.sh
+# Cria o script de forma segura com heredoc
+RUN cat << 'EOF' > /app.sh && chmod 755 /app.sh
+#!/bin/sh
+echo "App executando com segurança!"
+EOF
 
 # Imagem final segura
 FROM alpine:3.20
