@@ -1,0 +1,91 @@
+stages:
+  - lint
+  - security
+  - validate
+  - plan
+  - apply
+  - destroy
+
+# 1. TFLint para checar estilo e boas práticas
+tflint:
+  stage: lint
+  image:
+    name: "ghcr.io/terraform-linters/tflint:latest"
+    entrypoint: [""]
+  script:
+    - tflint --init
+    - tflint
+
+# 2. Checkov para análise de segurança (IaC)
+checkov:
+  stage: security
+  image:
+    name: bridgecrew/checkov:latest
+    entrypoint: [""]
+  script:
+    - checkov -d . --quiet --output json > checkov_report.json || true
+  artifacts:
+    paths:
+      - checkov_report.json
+    expire_in: 1 week
+
+# 3. Validação Terraform
+validate:
+  stage: validate
+  image:
+    name: hashicorp/terraform:1.5.7
+    entrypoint: [""]
+  script:
+    - terraform init -input=false
+    - terraform fmt -check
+    - terraform validate
+
+# 4. Plan Terraform
+plan:
+  stage: plan
+  image:
+    name: hashicorp/terraform:1.5.7
+    entrypoint: [""]
+  dependencies:
+    - validate
+    - tflint
+    - checkov
+  script:
+    - terraform init -input=false
+    - terraform plan -out=tfplan
+  artifacts:
+    paths:
+      - tfplan
+      - terraform.tfstate
+      - .terraform.lock.hcl
+    expire_in: 1 hour
+
+# 5. Apply Terraform manual
+apply:
+  stage: apply
+  image:
+    name: hashicorp/terraform:1.5.7
+    entrypoint: [""]
+  when: manual
+  dependencies:
+    - plan
+  script:
+    - terraform init -input=false
+    - terraform apply -auto-approve tfplan
+  artifacts:
+    paths:
+      - terraform.tfstate
+    expire_in: 1 hour
+
+# 6. Destroy Terraform manual
+destroy:
+  stage: destroy
+  image:
+    name: hashicorp/terraform:1.5.7
+    entrypoint: [""]
+  when: manual
+  dependencies:
+    - apply
+  script:
+    - terraform init -input=false
+    - terraform destroy -auto-approve
