@@ -6,7 +6,7 @@ stages:
 
 variables:
   IMAGE_NAME: rogerramossilva/myapp
-  IMAGE_TAG: dev
+  IMAGE_TAG: 1.0
   IMAGE_FULL: $IMAGE_NAME:$IMAGE_TAG
 
 # Etapa 1: Build da imagem
