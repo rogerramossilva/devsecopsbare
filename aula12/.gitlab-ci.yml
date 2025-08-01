@@ -68,7 +68,7 @@ skopeo-inspect:
   script:
     - echo "🔍 Inspeção da imagem local com Skopeo"
     - skopeo --version
-    - skopeo inspect docker://$IMAGE_FULL
+    - skopeo inspect --creds "$CI_REGISTRY_USER:$CI_REGISTRY_PASSWORD" docker://docker.io/$IMAGE_FULL
   needs: ["build-dev"]
 
 # Etapa 5: Assinatura com Cosign
